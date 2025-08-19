@@ -6,8 +6,10 @@
 #include <cstring>
 #include <vector>
 #include <math.h>
+#include "matplotlibcpp.h"
 
 
+namespace plt=matplotlibcpp;
 
 #define URI "ip:10.76.84.218"
 #define DEV_NAME "ad5592r_s"
@@ -30,7 +32,7 @@ typedef struct {
 int main(int argc, char **argv){
         struct iio_channel *chan[6];
         current_samples curren_samp;
-        std::vector<int> xvec, yvec,zvec;
+        std::vector<int> xvec, yvec,zvec,t_axis;
         int counter=0;
         
         struct iio_context* ctx = iio_create_context_from_uri(URI);
@@ -145,24 +147,32 @@ int main(int argc, char **argv){
                 xvec.push_back(curren_samp.xpos-curren_samp.xneg);
                 yvec.push_back(curren_samp.ypos-curren_samp.yneg);
                 zvec.push_back(curren_samp.zpos-curren_samp.zneg);
+                t_axis.push_back(counter++);
 
         }
 
-        for(size_t i=1; i<xvec.size(); ++i)
-        {
-                int x_diff = abs(xvec[i] - xvec[i-1]);
-                if(x_diff>=THRESHOLD){
-                        std::cout<<"X axis exceeded th\n";
-                }
-                int y_diff = abs(yvec[i] - yvec[i-1]);
-                if(y_diff>=THRESHOLD){
-                        std::cout<<"y axis exceeded th\n";
-                }
-                int z_diff = abs(zvec[i] - zvec[i-1]);
-                if(z_diff>=THRESHOLD){
-                        std::cout<<"z axis exceeded th\n";
-                }
-        }
-        
+        // for(size_t i=1; i<xvec.size(); ++i)
+        // {
+        //         int x_diff = abs(xvec[i] - xvec[i-1]);
+        //         if(x_diff>=THRESHOLD){
+        //                 std::cout<<"X axis exceeded th\n";
+        //         }
+        //         int y_diff = abs(yvec[i] - yvec[i-1]);
+        //         if(y_diff>=THRESHOLD){
+        //                 std::cout<<"y axis exceeded th\n";
+        //         }
+        //         int z_diff = abs(zvec[i] - zvec[i-1]);
+        //         if(z_diff>=THRESHOLD){
+        //                 std::cout<<"z axis exceeded th\n";
+        //         }
+        // }
+        plt::figure_size(1000,600);
+        plt::named_plot("X",t_axis,xvec,"b-");
+        plt::named_plot("Y",t_axis,yvec,"r-");
+        plt::named_plot("Z",t_axis,zvec,"g-");
+        plt::xlabel("Sample");
+        plt::ylabel("Acc");
+        plt::legend();
+        plt::show();
         return 0;
 }
