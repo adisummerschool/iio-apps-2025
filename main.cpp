@@ -1,7 +1,10 @@
+#include <matplotlibcpp.h>
 #include <iostream>
 #include <iio.h>
 #include <cstring>
 #include <vector>
+
+namespace plt = matplotlibcpp;
 
 #define URI "ip:10.76.84.229"
 #define DEV_NAME "ad5592r-s"
@@ -89,7 +92,8 @@ int main(int argc, char **argv) {
 	// 5. Add to vector
 	ptrdiff_t step_size = iio_buffer_step(buffer);
 	current_samples current_sample;
-	std::vector<int> x_axis, y_axis, z_axis;
+	std::vector<int> x_axis, y_axis, z_axis, t_axis;
+	int count = 0;
 
 	for (uint16_t *sample = static_cast<uint16_t*>(iio_buffer_start(buffer)); 
 		sample < iio_buffer_end(buffer); sample += step_size) {
@@ -111,26 +115,35 @@ int main(int argc, char **argv) {
 			x_axis.push_back(current_sample.xpos - current_sample.xneg);
 			y_axis.push_back(current_sample.ypos - current_sample.yneg);
 			z_axis.push_back(current_sample.zpos - current_sample.zneg);
+			t_axis.push_back(count++);
 	}
 
-	uint16_t x_diff = 0;
-	uint16_t y_diff = 0;
-	uint16_t z_diff = 0;
-	for (size_t i = 1; i < x_axis.size(); ++i) {
-		x_diff = abs(x_axis[i] - x_axis[i - 1]);
-		y_diff = abs(y_axis[i] - y_axis[i - 1]);
-		z_diff = abs(z_axis[i] - z_axis[i - 1]);
+	// uint16_t x_diff = 0;
+	// uint16_t y_diff = 0;
+	// uint16_t z_diff = 0;
+	// for (size_t i = 1; i < x_axis.size(); ++i) {
+	// 	x_diff = abs(x_axis[i] - x_axis[i - 1]);
+	// 	y_diff = abs(y_axis[i] - y_axis[i - 1]);
+	// 	z_diff = abs(z_axis[i] - z_axis[i - 1]);
 
-		if (x_diff >= THRESHOLD) {
-			std::cout << "X axis exceeded threshold\n";
-		}
-		if (y_diff >= THRESHOLD) {
-			std::cout << "Y axis exceeded threshold\n";
-		}
-		if (z_diff >= THRESHOLD) {
-			std::cout << "Z axis exceeded threshold\n";
-		}
-	}
+	// 	if (x_diff >= THRESHOLD) {
+	// 		std::cout << "X axis exceeded threshold\n";
+	// 	}
+	// 	if (y_diff >= THRESHOLD) {
+	// 		std::cout << "Y axis exceeded threshold\n";
+	// 	}
+	// 	if (z_diff >= THRESHOLD) {
+	// 		std::cout << "Z axis exceeded threshold\n";
+	// 	}
+	// }
+	plt::figure_size(1024, 768);
+	plt::named_plot("X", t_axis, x_axis, "b-");
+	plt::named_plot("Y", t_axis, y_axis, "r-");
+	plt::named_plot("Z", t_axis, z_axis, "g-");
+	plt::xlabel("Samples");
+	plt::ylabel("Acc");
+	plt::legend();
+	plt::show();
 
 	iio_context_destroy(ctx);
 	return 0;
