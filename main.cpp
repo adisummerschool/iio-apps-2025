@@ -3,6 +3,9 @@
 #include <errno.h>
 #include <string.h>
 #include <vector>
+#include "matplotlibcpp.h"
+
+namespace plt = matplotlibcpp;
 
 #define URI     "ip:10.76.84.222"
 #define DEV_NAME        "iio-ad5592"
@@ -32,7 +35,7 @@ int main(int argc, char **argv) {
         int ret;
         double val[6];
         double freq;
-        std::vector<int> x_axis, y_axis, z_axis;
+        std::vector<int> x_axis, y_axis, z_axis, t_axis;
         std::string channelName;
         ssize_t refill;
         ssize_t frequency_err;
@@ -113,6 +116,7 @@ int main(int argc, char **argv) {
 
         ptrdiff_t step_size =  iio_buffer_step(buf)/sizeof(uint16_t);
         printf("%li\n",step_size);
+        int count = 0;
         for (uint16_t *sample = static_cast<uint16_t *>(iio_buffer_start(buf)); sample < iio_buffer_end(buf); 
                 sample += step_size)  {
                 // current_samples current_sample;
@@ -129,6 +133,7 @@ int main(int argc, char **argv) {
                 x_axis.push_back(current_sample.xpos - current_sample.xneg);
                 y_axis.push_back(current_sample.ypos - current_sample.yneg);
                 z_axis.push_back(current_sample.zpos - current_sample.zneg);
+                t_axis.push_back(count++);
 
                 printf("%d\t%d\t%d\t%d\t%d\t%d\n", 
                 current_sample.xpos,
@@ -139,26 +144,33 @@ int main(int argc, char **argv) {
                 current_sample.zneg);
         }
 
-        printf("SIZE: %d\n",x_axis.size());
+        // printf("SIZE: %d\n",x_axis.size());
 
-        for (i = 1; i < x_axis.size(); ++i) {
+        // for (i = 1; i < x_axis.size(); ++i) {
              
-                int x_diff = abs(x_axis[i] - x_axis[i-1]);
-                if (x_diff >= THRESHOLD) {
-                        printf("X axis exceeded threshold\n");
-                }
-                int y_diff = abs(y_axis[i] - y_axis[i-1]);
-                if (y_diff >= THRESHOLD) {
-                        printf("Y axis exceeded threshold\n");
-                }
-                int z_diff = abs(z_axis[i] - z_axis[i-1]);
-                if (z_diff >= THRESHOLD) {
-                        printf("Z axis exceeded threshold\n");
-                }
-                // printf("%d: \t%d\t%d\t%d\n", i, x_diff, y_diff, z_diff);
-        }
+        //         int x_diff = abs(x_axis[i] - x_axis[i-1]);
+        //         if (x_diff >= THRESHOLD) {
+        //                 printf("X axis exceeded threshold\n");
+        //         }
+        //         int y_diff = abs(y_axis[i] - y_axis[i-1]);
+        //         if (y_diff >= THRESHOLD) {
+        //                 printf("Y axis exceeded threshold\n");
+        //         }
+        //         int z_diff = abs(z_axis[i] - z_axis[i-1]);
+        //         if (z_diff >= THRESHOLD) {
+        //                 printf("Z axis exceeded threshold\n");
+        //         }
+        //         // printf("%d: \t%d\t%d\t%d\n", i, x_diff, y_diff, z_diff);
+        // }
 
-
+        plt::figure_size(1000, 600);
+        plt::named_plot("X", t_axis, x_axis, "b-");
+        plt::named_plot("Y", t_axis, y_axis, "r-");
+        plt::named_plot("Z", t_axis, z_axis, "g-");
+        plt::xlabel("Samples");
+        plt::ylabel("Acc");
+        plt::legend();
+        plt::show();
 
         iio_buffer_destroy(buf);
         iio_context_destroy(ctx);
