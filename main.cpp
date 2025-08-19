@@ -4,12 +4,15 @@
 #include <unistd.h>
 #include <errno.h>
 #include <vector>
+#include "matplotlibcpp.h"
 
 #define URI "ip:10.76.84.234"
 #define DEV "ad5592r_s"
 #define SAMP_COUNT 200
 #define TRESHOLD 200
 #define SAMPLE_FREQ 100
+
+namespace plt = matplotlibcpp;
 
 typedef struct
 {
@@ -58,19 +61,12 @@ int main(int argc, char **argv)
         }
          
 
-
-
          struct iio_device *dev = iio_context_find_device(ctx, DEV);
         if (!dev)
         {
                 std::cout<<"Ai bai la device flacau \n";
                 return -1;
         }
-
-
-      
-
-
 
 
         struct iio_channel *channels[6];
@@ -108,7 +104,9 @@ int main(int argc, char **argv)
         uint16_t step_size = iio_buffer_step(buff);
         current_samples current_sample;
 
-            std::vector<int> x_axis(SAMP_COUNT), y_axis(SAMP_COUNT),z_axis(SAMP_COUNT);
+            std::vector<int> x_axis(SAMP_COUNT), y_axis(SAMP_COUNT),z_axis(SAMP_COUNT),t_axis(SAMP_COUNT);
+           
+            int count=0;
 
         for(uint16_t *sample = static_cast<uint16_t *>(iio_buffer_start(buff)); sample < iio_buffer_end(buff); sample += step_size)
         {
@@ -122,33 +120,71 @@ int main(int argc, char **argv)
                 x_axis.push_back(current_sample.xpos - current_sample.xneg);
                 y_axis.push_back(current_sample.ypos - current_sample.yneg);
                 z_axis.push_back(current_sample.zpos - current_sample.zneg);
+                t_axis.push_back(count++);
         }
+
+        iio_buffer_destroy(buff);
+        iio_context_destroy(ctx);
 
         
-        for(size_t i=1;i<x_axis.size(); i++)
-        {
-                int x_diff = abs(x_axis[i]-x_axis[i-1]);
+        // for(size_t i=1;i<x_axis.size(); i++)
+        // {
+        //         int x_diff = abs(x_axis[i]-x_axis[i-1]);
 
-                if(x_diff >= TRESHOLD)
-                        std::cout<<"X axes exceeded treshold \n";
+        //         if(x_diff >= TRESHOLD)
+        //                 std::cout<<"X axes exceeded treshold \n";
 
 
-                int y_diff = abs(y_axis[i]-y_axis[i-1]);
+        //         int y_diff = abs(y_axis[i]-y_axis[i-1]);
 
-                if(y_diff >= TRESHOLD)
-                        std::cout<<"Y axes exceeded treshold \n";
+        //         if(y_diff >= TRESHOLD)
+        //                 std::cout<<"Y axes exceeded treshold \n";
 
                 
-                int z_diff = abs(z_axis[i]-z_axis[i-1]);
+        //         int z_diff = abs(z_axis[i]-z_axis[i-1]);
 
-                if(z_diff >= TRESHOLD)
-                        std::cout<<"Z axes exceeded treshold \n";
+        //         if(z_diff >= TRESHOLD)
+        //                 std::cout<<"Z axes exceeded treshold \n";
                 
                 
 
 
-        }
+        // }
+
+        plt::figure_size(1000,600);
+        plt::named_plot("X", t_axis, x_axis,"b-");
+        plt::named_plot("Y", t_axis, y_axis,"r-");      
+        plt::named_plot("Z", t_axis, z_axis,"g-");
+
+        plt::xlabel("Samples");
+        plt::ylabel("Acc");
+        plt::legend();
+        plt::show();
 
         std::cout<<"\n bun \n";
         return 0;
 }
+
+
+
+
+
+//              ⠀⣠⣤⣤⣤⣤⣤⣤⣤⣤⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀ SUS
+// ⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣿⡿⠛⠉⠙⠛⠛⠛⠛⠻⢿⣿⣷⣤⡀⠀⠀⠀⠀⠀ 
+// ⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⠋⠀⠀⠀⠀⠀⠀⠀⢀⣀⣀⠈⢻⣿⣿⡄⠀⠀⠀⠀ 
+// ⠀⠀⠀⠀⠀⠀⠀⣸⣿⡏⠀⠀⠀⣠⣶⣾⣿⣿⣿⠿⠿⠿⢿⣿⣿⣿⣄⠀⠀⠀ 
+// ⠀⠀⠀⠀⠀⠀⠀⣿⣿⠁⠀⠀⢰⣿⣿⣯⠁⠀⠀⠀⠀⠀⠀⠀⠈⠙⢿⣷⡄⠀ 
+// ⠀⠀⣀⣤⣴⣶⣶⣿⡟⠀⠀⠀⢸⣿⣿⣿⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣷⠀ 
+// ⠀⢰⣿⡟⠋⠉⣹⣿⡇⠀⠀⠀⠘⣿⣿⣿⣿⣷⣦⣤⣤⣤⣶⣶⣶⣶⣿⣿⣿⠀ 
+// ⠀⢸⣿⡇⠀⠀⣿⣿⡇⠀⠀⠀⠀⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠃⠀ 
+// ⠀⣸⣿⡇⠀⠀⣿⣿⡇⠀⠀⠀⠀⠀⠉⠻⠿⣿⣿⣿⣿⡿⠿⠿⠛⢻⣿⡇⠀⠀ 
+// ⠀⣿⣿⠁⠀⠀⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣧⠀⠀ 
+// ⠀⣿⣿⠀⠀⠀⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⠀⠀ 
+// ⠀⣿⣿⠀⠀⠀⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⠀⠀ 
+// ⠀⢿⣿⡆⠀⠀⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⡇⠀⠀ 
+// ⠀⠸⣿⣧⡀⠀⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⠃⠀⠀ 
+// ⠀⠀⠛⢿⣿⣿⣿⣿⣇⠀⠀⠀⠀⣰⣿⣿⣷⣶⣶⣶⣶⠶⠀⢠⣿⣿⠀⠀⠀ 
+// ⠀⠀⠀⠀⠀⠀⠀⣿⣿⠀⠀⠀⠀⠀⣿⣿⡇⠀⣽⣿⡏⠁⠀⠀⢸⣿⡇⠀⠀⠀ 
+// ⠀⠀⠀⠀⠀⠀⠀⣿⣿⠀⠀⠀⠀⠀⣿⣿⡇⠀⢹⣿⡆⠀⠀⠀⣸⣿⠇⠀⠀⠀ 
+// ⠀⠀⠀⠀⠀⠀⠀⢿⣿⣦⣄⣀⣠⣴⣿⣿⠁⠀⠈⠻⣿⣿⣿⣿⡿⠏⠀⠀⠀⠀ 
+// ⠀⠀⠀⠀⠀⠀⠀⠈⠛⠻⠿⠿⠿⠿⠋
