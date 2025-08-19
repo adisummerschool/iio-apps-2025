@@ -1,3 +1,4 @@
+#include "matplotlibcpp.h"
 #include <iostream>
 #include <iio.h>
 #include <cstring>
@@ -8,6 +9,8 @@
 #define SAMPLE_COUNT 32
 #define THRESHOLD 100
 #define SAMPLE_FREQUENCY 50
+
+namespace plt = matplotlibcpp;
 
 typedef struct {
         uint16_t xpos;
@@ -77,7 +80,8 @@ int main(int argc, char **argv){
                 return -1;
         }
 
-        std::vector<int> x_axis, y_axis, z_axis;
+        int count = 0;
+        std::vector<int> x_axis, y_axis, z_axis, t_axis;
 
                 ptrdiff_t step_size = iio_buffer_step(buffer);
                 uint16_t *buf_start = static_cast<uint16_t *>(iio_buffer_start(buffer));
@@ -89,6 +93,7 @@ int main(int argc, char **argv){
                         x_axis.push_back(sample_buffer.xpos - sample_buffer.xneg);
                         y_axis.push_back(sample_buffer.ypos - sample_buffer.yneg);
                         z_axis.push_back(sample_buffer.zpos - sample_buffer.zneg);
+                        t_axis.push_back(count++);
                 }
 
 
@@ -97,28 +102,34 @@ int main(int argc, char **argv){
                           << ", y = " << y_axis[i] << ", z = " << z_axis[i] << std::endl;
         }
 
-        // Keep these loops starting at 1 since they compare with previous sample
-        for (size_t i = 1; i < x_axis.size(); ++i) {
-                int x_diff = abs(x_axis[i] - x_axis[i - 1]);
-                if (x_diff > THRESHOLD) {
-                        std::cout << "X-axis spike detected between samples " << i - 1 << " and " << i << std::endl;
-                }
-        }
+        // for (size_t i = 1; i < x_axis.size(); ++i) {
+        //         int x_diff = abs(x_axis[i] - x_axis[i - 1]);
+        //         if (x_diff > THRESHOLD) {
+        //                 std::cout << "X-axis spike detected between samples " << i - 1 << " and " << i << std::endl;
+        //         }
+        // }
 
-        for (size_t i = 1; i < y_axis.size(); ++i) {
-                int y_diff = abs(y_axis[i] - y_axis[i - 1]);
-                if (y_diff > THRESHOLD) {
-                        std::cout << "Y-axis spike detected between samples " << i - 1 << " and " << i << std::endl;
-                }
-        }
+        // for (size_t i = 1; i < y_axis.size(); ++i) {
+        //         int y_diff = abs(y_axis[i] - y_axis[i - 1]);
+        //         if (y_diff > THRESHOLD) {
+        //                 std::cout << "Y-axis spike detected between samples " << i - 1 << " and " << i << std::endl;
+        //         }
+        // }
 
-        for (size_t i = 1; i < z_axis.size(); ++i) {
-                int z_diff = abs(z_axis[i] - z_axis[i - 1]);
-                if (z_diff > THRESHOLD) {
-                        std::cout << "Z-axis spike detected between samples " << i - 1 << " and " << i << std::endl;
-                }
-        }
+        // for (size_t i = 1; i < z_axis.size(); ++i) {
+        //         int z_diff = abs(z_axis[i] - z_axis[i - 1]);
+        //         if (z_diff > THRESHOLD) {
+        //                 std::cout << "Z-axis spike detected between samples " << i - 1 << " and " << i << std::endl;
+        //         }
+        // }
 
-        iio_context_destroy(ctx);
+        plt::figure_size(1000,600);
+        plt::named_plot("X", t_axis, x_axis, "b-");
+        plt::named_plot("Y", t_axis, y_axis, "r-");
+        plt::named_plot("Z", t_axis, z_axis, "g-");
+        plt::xlabel("Time");
+        plt::ylabel("Acc");
+        plt::legend();
+        plt::show();
         return 0;
 }
