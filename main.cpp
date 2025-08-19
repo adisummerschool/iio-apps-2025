@@ -1,3 +1,4 @@
+#include"matplotlibcpp.h"
 #include<iostream>
 #include<iio.h>
 #include<string.h>
@@ -9,6 +10,8 @@
 
 #define THRESHOLD 100
 #define SAMPLE_FREQUENCY 50
+
+namespace plt = matplotlibcpp;
 
 typedef struct {
         uint16_t x_pos;
@@ -101,11 +104,12 @@ int main(int argc, char** argv){
         //trebe puse intr un vector
         std::vector<int> x_axis(SAMPLE_COUNT),
         y_axis(SAMPLE_COUNT),
-        z_axis(SAMPLE_COUNT);
+        z_axis(SAMPLE_COUNT), t_axis(SAMPLE_COUNT);
 
         // functii de folosit: iio_buffer_start sau iio_buffer_frst (cu specificare de unde incepe),
         // cu start le vedem pe toate pana la iio_buffer_end
         uint16_t step_size = iio_buffer_step(buf);
+        int count = 0;
         for(uint16_t *sample = static_cast<uint16_t*>(iio_buffer_start(buf)); 
         sample < iio_buffer_end(buf); 
         sample += step_size)
@@ -126,27 +130,33 @@ int main(int argc, char** argv){
                 x_axis.push_back(current_sample.x_pos - current_sample.x_neg);
                 y_axis.push_back(current_sample.y_pos - current_sample.y_neg);
                 z_axis.push_back(current_sample.z_pos - current_sample.z_neg);
-
-
-        }
-
-        for(int i = 1; i < x_axis.size(); ++i){
-                int x_diff = abs(x_axis[i] - x_axis[i-1]);
-                if(x_diff >= THRESHOLD){
-                        std::cout << "X axis excedeed threshold\n";
-                }
-
-                int y_diff = abs(y_axis[i] - y_axis[i-1]);
-                if(y_diff >= THRESHOLD){
-                        std::cout << "Y axis excedeed threshold\n";
-                }
-
-                int z_diff = abs(z_axis[i] - z_axis[i-1]);
-                if(z_diff >= THRESHOLD){
-                        std::cout << "Z axis excedeed threshold\n";
-                }
+                t_axis.push_back(count++);
                 
         }
+
+        // for(int i = 1; i < x_axis.size(); ++i){
+        //         int x_diff = abs(x_axis[i] - x_axis[i-1]);
+        //         if(x_diff >= THRESHOLD){
+        //                 std::cout << "X axis excedeed threshold\n";
+        //         }
+
+        //         int y_diff = abs(y_axis[i] - y_axis[i-1]);
+        //         if(y_diff >= THRESHOLD){
+        //                 std::cout << "Y axis excedeed threshold\n";
+        //         }
+        //         int z_diff = abs(z_axis[i] - z_axis[i-1]);
+        //         if(z_diff >= THRESHOLD){
+        //                 std::cout << "Z axis excedeed threshold\n";
+        //         }
+        plt::figure_size(1000,600);
+        plt::named_plot("X", t_axis, x_axis, "b-");
+        plt::named_plot("Y", t_axis, y_axis, "r-");
+        plt::named_plot("Z", t_axis, z_axis, "g-");
+        
+        plt::xlabel("Samples");
+        plt::ylabel("Acc");
+        plt::legend();
+        plt::show();
 
         return 0;
 }
