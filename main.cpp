@@ -1,8 +1,12 @@
+#include <matplotlibcpp.h>
+#include <cerrno>
 #include <iostream>
 #include <iio.h>
 #include <string.h>
 #include <memory>
 #include <vector>
+
+namespace plt = matplotlibcpp;
 
 #define URI "ip:10.76.84.236"
 #define DEV_NAME "ad5592r-s"
@@ -90,7 +94,8 @@ int main(int argc, char **argv)
 
 	ptrdiff_t step_size = iio_buffer_step(buffer);
 	current_samples *current_sample;
-	std::vector<int> x_axis, y_axis, z_axis;
+	std::vector<int> x_axis, y_axis, z_axis, time_axis;
+	int count = 0;
 
 	for (uint16_t *sample = static_cast<uint16_t *>(iio_buffer_start(buffer)); sample < iio_buffer_end(buffer);
 	     sample += step_size) {
@@ -113,24 +118,37 @@ int main(int argc, char **argv)
 		x_axis.push_back(current_sample->x_pos - current_sample->x_neg);
 		y_axis.push_back(current_sample->y_pos - current_sample->y_neg);
 		z_axis.push_back(current_sample->z_pos - current_sample->z_neg);
+		time_axis.push_back(count++);
 	}
 
-	for (size_t i = 0; i < x_axis.size(); i++) {
+	// for (size_t i = 0; i < x_axis.size(); i++) {
 
-		uint16_t x_diff = abs(x_axis[i] - x_axis[i - 1]);
-		if (x_diff >= THRESHOLD)
-			std::cout << "X axis exceeded threshold\n";
+	// 	uint16_t x_diff = abs(x_axis[i] - x_axis[i - 1]);
+	// 	if (x_diff >= THRESHOLD)
+	// 		std::cout << "X axis exceeded threshold\n";
 
-		uint16_t y_diff = abs(y_axis[i] - y_axis[i - 1]);
-		if (y_diff >= THRESHOLD)
-			std::cout << "Y axis exceeded threshold\n";
+	// 	uint16_t y_diff = abs(y_axis[i] - y_axis[i - 1]);
+	// 	if (y_diff >= THRESHOLD)
+	// 		std::cout << "Y axis exceeded threshold\n";
 
-		uint16_t z_diff = abs(z_axis[i] - z_axis[i - 1]);
-		if (z_diff >= THRESHOLD)
-			std::cout << "Z axis exceeded threshold\n";
+	// 	uint16_t z_diff = abs(z_axis[i] - z_axis[i - 1]);
+	// 	if (z_diff >= THRESHOLD)
+	// 		std::cout << "Z axis exceeded threshold\n";
 
-	}
+	// }
 
+	plt::figure_size(1000, 600);
+	plt::named_plot("X", time_axis, x_axis, "b-");
+	plt::named_plot("Y", time_axis, y_axis, "r-");
+	plt::named_plot("Z", time_axis, z_axis, "g-");
+
+	plt::xlabel("Samples");
+	plt::ylabel("Acc");
+
+	plt::legend();
+	plt::show();
+
+	iio_buffer_destroy(buffer);
 	iio_context_destroy(ctx);
 
 	return 0;
