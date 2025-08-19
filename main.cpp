@@ -3,6 +3,9 @@
 #include <errno.h>
 #include <string.h>
 #include <vector>
+#include "matplotlibcpp.h"
+
+namespace plt = matplotlibcpp;
 
 #define URI "ip:10.76.84.238"
 #define DEV_NAME "iio-adc-ad5592"
@@ -30,7 +33,7 @@ const char *attributes[] = {
         "voltage5"
     };
 
-std::vector<int> x_axis(SAMPLE_COUNT), y_axis(SAMPLE_COUNT), z_axis(SAMPLE_COUNT);
+std::vector<int> x_axis, y_axis, z_axis, t_axis;
 int ret;
 
 int main(int argc, char **argv){
@@ -87,6 +90,7 @@ int main(int argc, char **argv){
                 std::cerr << " Could not refill buffer, errno: " << errno << std::endl;
         }
 
+        int count = 0;
         current_samples current_sample;
         ptrdiff_t step_size = iio_buffer_step(buf);
         for(uint16_t *sample = static_cast<uint16_t*>(iio_buffer_start(buf)); 
@@ -100,26 +104,33 @@ int main(int argc, char **argv){
                 x_axis.push_back(current_sample.xpos - current_sample.xneg);
                 y_axis.push_back(current_sample.ypos - current_sample.yneg);
                 z_axis.push_back(current_sample.zpos - current_sample.zneg);
+                t_axis.push_back(count++);
         }
 
-        for(size_t i = 1; i < x_axis.size(); i++){
-                int x_diff = abs(x_axis[i] - x_axis[i-1]);
-                if(x_diff >= THRESHOLD){
-                        std::cout<< "X axis exceeded threshold\n";
-                }
+        // for(size_t i = 1; i < x_axis.size(); i++){
+        //         int x_diff = abs(x_axis[i] - x_axis[i-1]);
+        //         if(x_diff >= THRESHOLD){
+        //                 std::cout<< "X axis exceeded threshold\n";
+        //         }
 
-                int y_diff = abs(y_axis[i] - y_axis[i-1]);
-                if(y_diff >= THRESHOLD){
-                        std::cout<< "Y axis exceeded threshold\n";
-                }
+        //         int y_diff = abs(y_axis[i] - y_axis[i-1]);
+        //         if(y_diff >= THRESHOLD){
+        //                 std::cout<< "Y axis exceeded threshold\n";
+        //         }
 
-                int z_diff = abs(z_axis[i] - z_axis[i-1]);
-                if(z_diff >= THRESHOLD){
-                        std::cout<< "Z axis exceeded threshold\n";
-                }
-        }
-
-        //iio_buffer_destroy(buf);
-        //iio_context_destroy(ctx);
+        //         int z_diff = abs(z_axis[i] - z_axis[i-1]);
+        //         if(z_diff >= THRESHOLD){
+        //                 std::cout<< "Z axis exceeded threshold\n";
+        //         }
+        // }
+        //printf("%d %d %d %d\n", x_axis.size(), y_axis.size(), z_axis.size(), t_axis.size());
+        plt::figure_size(1000, 600);
+        plt::named_plot("X", t_axis, x_axis, "b-");
+        plt::named_plot("Y", t_axis, y_axis, "r-");
+        plt::named_plot("Z", t_axis, z_axis, "g-");
+        plt::xlabel("Samples");
+        plt::ylabel("Acc");
+        plt::legend();
+        plt::show();
         return 0;
 }
