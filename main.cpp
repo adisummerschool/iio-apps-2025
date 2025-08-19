@@ -3,6 +3,9 @@
 #include <errno.h>
 #include <string.h>
 #include <vector>
+#include "matplotlibcpp.h"
+
+namespace plt = matplotlibcpp;
 
 #define URI "ip:10.76.84.245"
 #define DEV_NAME "ad5592r_s"
@@ -106,7 +109,8 @@ int main (int argc, char** argv){
 
         //PARSING THROUGH THE BUFFER
         uint16_t step = iio_buffer_step(buff);
-        std::vector<int> x_axis(SAMPLE_COUNT), y_axis(SAMPLE_COUNT), z_axis(SAMPLE_COUNT);
+        std::vector<int> x_axis(SAMPLE_COUNT), y_axis(SAMPLE_COUNT), z_axis(SAMPLE_COUNT), t_axis(SAMPLE_COUNT);
+        int count = 0;
 
         for(uint16_t *sample = static_cast<uint16_t *>(iio_buffer_start(buff)); sample < iio_buffer_end(buff); sample += step){
                 current_samples samples;
@@ -117,28 +121,40 @@ int main (int argc, char** argv){
                 // samples.zpos = *(sample + 4);
                 // samples.zneg = *(sample + 5);
                 memcpy(&samples, sample, sizeof(samples));
-
-                std::cout <<samples.xpos << " " <<samples.xneg << " " <<samples.ypos << " " <<samples.yneg << " " <<samples.zpos << " " <<samples.zneg << std::endl;
+                 
+                //std::cout <<samples.xpos << " " <<samples.xneg << " " <<samples.ypos << " " <<samples.yneg << " " <<samples.zpos << " " <<samples.zneg << std::endl;
+                
                 x_axis.push_back(samples.xpos - samples.xneg);
                 y_axis.push_back(samples.ypos - samples.yneg);
                 z_axis.push_back(samples.zpos - samples.zneg);
+                t_axis.push_back(count++);
         }
 
-        for(int i=1;i<x_axis.size();++i){
-                int x_diff = abs(x_axis[i] - x_axis[i-1]);
-                if(x_diff >= TRESHOLD)
-                        std::cout<< "X axis exceeded treshold"<<std::endl;
+        // for(int i=1;i<x_axis.size();++i){
+        //         int x_diff = abs(x_axis[i] - x_axis[i-1]);
+        //         if(x_diff >= TRESHOLD)
+        //                 std::cout<< "X axis exceeded treshold"<<std::endl;
 
-                int y_diff = abs(y_axis[i] - y_axis[i-1]);
-                if(y_diff >= TRESHOLD)
-                        std::cout<< "Y axis exceeded treshold"<<std::endl;
+        //         int y_diff = abs(y_axis[i] - y_axis[i-1]);
+        //         if(y_diff >= TRESHOLD)
+        //                 std::cout<< "Y axis exceeded treshold"<<std::endl;
 
-                int z_diff = abs(z_axis[i] - z_axis[i-1]);
-                if(z_diff >= TRESHOLD)
-                        std::cout<< "Z axis exceeded treshold"<<std::endl;
+        //         int z_diff = abs(z_axis[i] - z_axis[i-1]);
+        //         if(z_diff >= TRESHOLD)
+        //                 std::cout<< "Z axis exceeded treshold"<<std::endl;
+        // }
 
+        iio_buffer_destroy(buff);
+        iio_context_destroy(ctx);
 
-        }
+        plt::figure_size(1000, 600);
+        plt::named_plot("X", t_axis, x_axis, "b-");
+        plt::named_plot("Y", t_axis, y_axis, "r-");
+        plt::named_plot("Z", t_axis, z_axis, "g-");
+        plt::xlabel("Samples");
+        plt::ylabel("Acc");
+        plt::legend();
+        plt::show();
 
         printf("Totu' bn\n");
 
