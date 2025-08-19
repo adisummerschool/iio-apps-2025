@@ -4,12 +4,17 @@
 #include <string.h>
 #include <unistd.h>
 #include <vector>
+#include "matplotlibcpp.h"
 
 #define URI "ip:10.76.84.231"
 #define DEV_NAME "IIO_ADC_AD5592R_S"
 #define SAMPLE_COUNT 32
 #define THR 100
 #define SAMPLE_FREQ 50
+
+
+namespace plt = matplotlibcpp;
+
 
 typedef struct {
     uint16_t xpoz;
@@ -101,7 +106,8 @@ int main(int argc, char *argv[]) {
 
     ptrdiff_t step_size = iio_buffer_step(buffer);
     step_size /= sizeof(uint16_t);  
-    std::vector<int> x_axis,y_axis,z_axis;
+    std::vector<int> x_axis,y_axis,z_axis,t_axis;
+    int count=0;
 
     for (uint16_t *sample = static_cast<uint16_t *>(iio_buffer_start(buffer));
          sample < iio_buffer_end(buffer); 
@@ -124,29 +130,42 @@ int main(int argc, char *argv[]) {
                   << "zpoz: " << current_sample.zpoz << " "
                   << "zneg: " << current_sample.zneg << "\n";
 
+
         x_axis.push_back(current_sample.xpoz - current_sample.xneg);
         y_axis.push_back(current_sample.ypoz - current_sample.yneg);
         z_axis.push_back(current_sample.zpoz - current_sample.zneg);
-
+        t_axis.push_back(count++);
 
     }
 
-    for(size_t i=1;i<x_axis.size();++i){
-        int x_diff=abs(x_axis[i]-x_axis[i-1]);
-                if(x_diff>=THR){
-                        std::cout<<"X axis exceeded thhreshold\n";
-                }
-        int y_diff=abs(y_axis[i]-y_axis[i-1]);
-                if(y_diff>=THR){
-                        std::cout<<"Y axis exceeded thhreshold\n";
-                }
-        int z_diff=abs(z_axis[i]-z_axis[i-1]);
-                if(z_diff>=THR){
-                        std::cout<<"Z axis exceeded thhreshold\n";
-                }
-        printf("%d: \t%d\t%d\t%d\n", i, x_diff, y_diff, z_diff);
+//     for(size_t i=1;i<x_axis.size();++i){
+//         int x_diff=abs(x_axis[i]-x_axis[i-1]);
+//                 if(x_diff>=THR){
+//                         std::cout<<"X axis exceeded thhreshold\n";
+//                 }
+//         int y_diff=abs(y_axis[i]-y_axis[i-1]);
+//                 if(y_diff>=THR){
+//                         std::cout<<"Y axis exceeded thhreshold\n";
+//                 }
+//         int z_diff=abs(z_axis[i]-z_axis[i-1]);
+//                 if(z_diff>=THR){
+//                         std::cout<<"Z axis exceeded thhreshold\n";
+//                 }
+//         printf("%d: \t%d\t%d\t%d\n", i, x_diff, y_diff, z_diff);
         
-        }
+//         }
+
+    plt::figure_size(1000,600);
+    plt::named_plot("X",t_axis,x_axis,"b-");
+    plt::named_plot("Y",t_axis,y_axis,"r-");
+    plt::named_plot("Z",t_axis,z_axis,"g-");
+
+    plt::xlabel("Sample");
+    plt::ylabel("Acc");
+    plt::legend();
+    plt::show();
+
+
     
 
     iio_buffer_destroy(buffer);
