@@ -5,7 +5,9 @@
 #include <string.h>
 #include <string>
 #include <vector>
+#include "matplotlibcpp.h"
 
+namespace plt = matplotlibcpp;
 
 #define URI "ip:10.76.84.157"
 #define DEV_NAME "ad5592r_s"
@@ -126,33 +128,45 @@ int main(int argc, char**argv){
                 //z_axis[counter] = current_sample.zpos - current_sample.zneg;
                 z_axis.push_back(current_sample.zpos - current_sample.zneg);
 
-                time.push_back(counter);
+                time.push_back(counter++);
 
 
                 printf("%d\t%d\t%d\t%d\t%d\t%d\n",current_sample.xpos,
                 current_sample.xneg, current_sample.ypos, current_sample.yneg, current_sample.zpos,
                  current_sample.zneg);
-                counter++;
         }
 
-        for (int i=1; i < x_axis.size(); ++i)
-        {
-                int x_diff = x_axis[i] - x_axis[i-1];
-                if (x_diff >= THRESHOLD)
-                {
-                        printf("X axis exceeded threshold\n");
-                }
-                int y_diff = y_axis[i] - y_axis[i-1];
-                if (y_diff >= THRESHOLD)
-                {
-                        printf("Y axis exceeded threshold\n");
-                }
-                int z_diff = z_axis[i] - z_axis[i-1];
-                if (z_diff >= THRESHOLD)
-                {
-                        printf("Z axis exceeded threshold\n");
-                }
-        }
-        printf("x_axis size: %d\n", x_axis.size());
+        // for (int i=1; i < x_axis.size(); ++i)
+        // {
+                
+        //         int x_diff = x_axis[i] - x_axis[i-1];
+        //         if (x_diff >= THRESHOLD)
+        //         {
+        //                 printf("%d\t", i);
+        //                 printf("X axis exceeded threshold\n");
+        //         }
+        //         int y_diff = y_axis[i] - y_axis[i-1];
+        //         if (y_diff >= THRESHOLD)
+        //         {
+        //                 printf("%d\t", i);
+        //                 printf("Y axis exceeded threshold\n");
+        //         }
+        //         int z_diff = z_axis[i] - z_axis[i-1];
+        //         if (z_diff >= THRESHOLD)
+        //         {
+        //                 printf("%d\t", i);
+        //                 printf("Z axis exceeded threshold\n");
+        //         }
+        // }
+        //printf("x_axis size: %d\n", x_axis.size());
+
+        plt::figure_size(1000, 600);
+        plt::named_plot("X", time, x_axis, "b-");
+        plt::named_plot("Y", time, y_axis, "r-");
+        plt::named_plot("Z", time, z_axis, "g-");
+        plt::xlabel("Sample");
+        plt::ylabel("Acc");
+        plt::legend();
+        plt::show();
         return 0;
 }
