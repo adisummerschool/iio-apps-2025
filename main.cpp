@@ -3,9 +3,13 @@
 #include <errno.h>
 #include <cstring>
 #include <vector>
+#include <matplotlibcpp.h>
 
-#define URI                     "ip:10.76.84.194"
-#define DEV_NAME                "ad5592r"
+namespace plt = matplotlibcpp;
+
+// #define URI                     "ip:10.76.84.194"
+#define URI                     "ip:10.76.84.219"
+#define DEV_NAME                "iio-ad5592r-s"
 #define SAMPLE_COUNT            200
 #define THRESHOLD               100
 #define SAMPLE_FREQUENCY        100    
@@ -113,23 +117,25 @@ int main(int argc, char **argv)
         cout << "All ok!" << endl;
 
         // Declare vectors to store axis data
-        std::vector<int> x_axis(SAMPLE_COUNT);
-        std::vector<int> y_axis(SAMPLE_COUNT);
-        std::vector<int> z_axis(SAMPLE_COUNT);
+        std::vector<int> x_axis;
+        std::vector<int> y_axis;
+        std::vector<int> z_axis;
+        std::vector<int> t_axis;
 
         ptrdiff_t step_size = iio_buffer_step(buf);
+        int count = 0;
 
         for (uint16_t *sample = static_cast<uint16_t *>(iio_buffer_start(buf)); sample < iio_buffer_end(buf); sample += step_size)
         {
                 current_samples current_sample;
                 current_sample.xpos = *sample;
-                current_sample.xneg = *(sample + sizeof(uint16_t));
+                current_sample.xneg = *(sample + 1);
 
-                current_sample.ypos = *(sample + 2 * sizeof(uint16_t));
-                current_sample.yneg = *(sample + 3 * sizeof(uint16_t));
+                current_sample.ypos = *(sample + 2);
+                current_sample.yneg = *(sample + 3);
 
-                current_sample.zpos = *(sample + 4 * sizeof(uint16_t));
-                current_sample.zneg = *(sample + 5 * sizeof(uint16_t));
+                current_sample.zpos = *(sample + 4);
+                current_sample.zneg = *(sample + 5);
 
                 cout << current_sample.xpos << ' ' << current_sample.xneg << ' '
                      << current_sample.ypos << ' ' << current_sample.yneg << ' '
@@ -138,25 +144,36 @@ int main(int argc, char **argv)
                 x_axis.push_back(current_sample.xpos - current_sample.xneg);
                 y_axis.push_back(current_sample.ypos - current_sample.yneg);
                 z_axis.push_back(current_sample.zpos - current_sample.zneg);
+                t_axis.push_back(count++);
         }
+
 
         // Analyze the data for significant changes, such as shocks
-        for (int i = 1; i < x_axis.size(); ++i) {
-                int x_diff = x_axis[i] - x_axis[i - 1];
-                if (x_diff > THRESHOLD) {
-                        cout << "X-axis significant change detected: " << x_diff << endl;
-                }
+        // for (int i = 1; i < x_axis.size(); ++i) {
+        //         int x_diff = x_axis[i] - x_axis[i - 1];
+        //         if (x_diff > THRESHOLD) {
+        //                 cout << "X-axis significant change detected: " << x_diff << endl;
+        //         }
 
-                int y_diff = y_axis[i] - y_axis[i - 1];
-                if (y_diff > THRESHOLD) {
-                        cout << "Y-axis significant change detected: " << y_diff << endl;
-                }
+        //         int y_diff = y_axis[i] - y_axis[i - 1];
+        //         if (y_diff > THRESHOLD) {
+        //                 cout << "Y-axis significant change detected: " << y_diff << endl;
+        //         }
 
-                int z_diff = z_axis[i] - z_axis[i - 1];
-                if (z_diff > THRESHOLD) {
-                        cout << "Z-axis significant change detected: " << z_diff << endl;
-                }
-        }
+        //         int z_diff = z_axis[i] - z_axis[i - 1];
+        //         if (z_diff > THRESHOLD) {
+        //                 cout << "Z-axis significant change detected: " << z_diff << endl;
+        //         }
+        // }
+
+        plt::figure_size(1000, 600);
+        plt::named_plot("X-axis", t_axis, x_axis, "b-");
+        plt::named_plot("Y-axis", t_axis, y_axis, "r-");
+        plt::named_plot("Z-axis", t_axis, z_axis, "g-");
+        plt::xlabel(std::string("Time"));
+        plt::ylabel(std::string("Accelerometer axis Values"));
+        plt::legend();
+        plt::show();
 
         // Exit:
         iio_context_destroy(ctx);
