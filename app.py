@@ -5,20 +5,46 @@ import iio
 import math
 from pynput import keyboard # pip install pynput
 from pynput.keyboard import Controller
+import tkinter as tk
 
 URI = "ip:10.76.84.222"
 DEVICE = "iio-ad5592"
-TIMEOUT = 0.3
+TIMEOUT = 0.2
 
 def create_gui(queue: Queue):
-        # print("gui")
-        while not exit_event.is_set():
-                if start_event.is_set():
-                        movement = queue.get()
-                        # print(movement)
-                        queue.put(movement)
-                        # time.sleep(1)
-                start_event.wait()
+        
+        def update_sq_color(canvas, sq, value):
+                canvas.itemconfig(sq, fill=f"#ff{int(255*(1-value)):02x}{int(255*(1-value)):02x}")
+
+        def update_gui():
+                movement = queue.get()
+                
+                update_sq_color(canvas, squares['left'], movement['left'])
+                update_sq_color(canvas, squares['right'], movement['right'])
+                update_sq_color(canvas, squares['front'], movement['front'])
+                update_sq_color(canvas, squares['back'], movement['back'])
+
+                root.after(int(TIMEOUT * 1000), update_gui)
+        
+        root = tk.Tk()
+        root.title("key simulator")
+
+        canvas = tk.Canvas(root, width = 400, height = 400)
+        canvas.pack()
+
+        square_size = 100
+        squares = {
+                'left': canvas.create_rectangle(50,150, 50+square_size, 150+square_size, fill='white'), 
+                'right': canvas.create_rectangle(250,150, 250+square_size, 150+square_size, fill='white'),
+                'front': canvas.create_rectangle(150,50, 150+square_size, 50+square_size, fill='white'),
+                'back': canvas.create_rectangle(150,250, 150+square_size, 250+square_size, fill='white'),
+        }
+
+        update_gui()
+
+        root.mainloop()
+
+        
 
 def init_device():
         ctx = iio.Context(URI)
@@ -115,7 +141,7 @@ def start_iio(device: iio.Device):
 
         time.sleep(max(0,TIMEOUT - timer))
 
-        return init_movements
+        return movement
 
 def simulate_movement(queue: Queue):
         
@@ -174,4 +200,4 @@ if __name__ == '__main__':
         with keyboard.Listener(on_press=on_keypress) as listener:
                 listener.join()
 
-        
+        #dwdwdwdsssasassssssssssssswwwwwdddsaaaaaaaasasasssssdda
